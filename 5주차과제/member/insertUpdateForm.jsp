@@ -1,36 +1,36 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"
-    import="java.sql.*" %>
+    import="java.sql.*, javax.naming.*, javax.sql.*" %>
 <%
-	String id = request.getParameter("id");
-	String name = "";
-	String pwd = "";
-	String action = "insertPro.jsp";
+    String id = request.getParameter("id");
 
-	if (id != null && !id.trim().equals("")) {
-		Class.forName("org.mariadb.jdbc.Driver");
-		String url = "jdbc:mariadb://localhost:3307/kimdb";
-		String user = "kim";
-		String password = "1111";
-		Connection conn = DriverManager.getConnection("jdbc:mariadb://localhost:3307/kimdb", "kim", "1111");
+    String name = "";
+    String pwd = "";
+    String action = "insertPro.jsp";
 
-		String sql = "SELECT * FROM member WHERE id = ?";
-		PreparedStatement pstmt = conn.prepareStatement(sql);
-		pstmt.setString(1, id);
+    if (id != null && !id.trim().equals("")) {
+        Context initContext = new InitialContext();
+        Context envContext = (Context)initContext.lookup("java:/comp/env");
+        DataSource ds = (DataSource)envContext.lookup("jdbc/kimdb");
+        Connection conn = ds.getConnection();
 
-		ResultSet rs = pstmt.executeQuery();
-		if (rs.next()) {
-			name = rs.getString("name");
-			pwd = rs.getString("pwd");
-			action = "updatePro.jsp";
-		}
+        String sql = "SELECT * FROM member WHERE id = ?";
+        PreparedStatement pstmt = conn.prepareStatement(sql);
+        pstmt.setString(1, id);
 
-		rs.close();
-		pstmt.close();
-		conn.close();
-	} else {
-		id = "";
-	}
+        ResultSet rs = pstmt.executeQuery();
+        if (rs.next()) {
+            name = rs.getString("name");
+            pwd = rs.getString("pwd");
+            action = "updatePro.jsp";
+        }
+
+        rs.close();
+        pstmt.close();
+        conn.close();
+    } else {
+        id = "";
+    }
 %>
 <!DOCTYPE html>
 <html>
