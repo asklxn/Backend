@@ -1,23 +1,10 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8"%>
-<%@page import="java.sql.*"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.sql.*, javax.naming.*, javax.sql.*" %>
 
 <%
-	// 1. DB 연동 드라이버 로드
-	Class.forName("org.mariadb.jdbc.Driver");
-
-	// 2. 연결 객체 생성
-	String url = "jdbc:mariadb://localhost:3307/kimdb";
-	String user = "kim";
-	String password = "1111";
-	Connection con = DriverManager.getConnection("jdbc:mariadb://localhost:3307/kimdb", "kim", "1111");
-
-	// 3. SQL문 실행 준비
-	String sql = "SELECT * FROM member";
-	PreparedStatement st = con.prepareStatement(sql);
-
-	// 4. SQL 실행
-	ResultSet rs = st.executeQuery();
+	Connection con = null;
+	PreparedStatement st = null;
+	ResultSet rs = null;
 %>
 
 <!DOCTYPE html>
@@ -40,24 +27,38 @@
 			<th>이름</th>
 			<th>비밀번호</th>
 		</tr>
+
 <%
-	// 5. 결과집합 처리
-	while(rs.next()) {
-		String id = rs.getString("id");
-		String name = rs.getString("name");
-		String pwd = rs.getString("pwd");
-%>	
+	try {
+		// 커넥션 풀에서 커넥션 얻기
+		Context initCtx = new InitialContext();
+		Context envCtx = (Context)initCtx.lookup("java:comp/env");
+		DataSource ds = (DataSource)envCtx.lookup("jdbc/kimdb");
+		con = ds.getConnection();
+
+		String sql = "SELECT * FROM member";
+		st = con.prepareStatement(sql);
+		rs = st.executeQuery();
+
+		while(rs.next()) {
+			String id = rs.getString("id");
+			String name = rs.getString("name");
+			String pwd = rs.getString("pwd");
+%>
 		<tr>
 			<td><a href="updateForm.jsp?id=<%=id %>"><%=id %></a></td>
 			<td><%=name %></td>
 			<td><%=pwd %></td>
 		</tr>
 <%
+		}
+	} catch(Exception e) {
+		e.printStackTrace();
+	} finally {
+		if (rs != null) try { rs.close(); } catch (SQLException e) {}
+		if (st != null) try { st.close(); } catch (SQLException e) {}
+		if (con != null) try { con.close(); } catch (SQLException e) {}
 	}
-	// 6. 연결 해제
-	rs.close();
-	st.close();
-	con.close();
 %>
 	</table>
 	</div>	
